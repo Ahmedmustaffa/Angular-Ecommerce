@@ -1,0 +1,75 @@
+<div class="row row-cols-1 row-cols-md-3 g-4">
+  @for (p of products; track p._id) {
+    <div class="col">
+      <div class="card h-100 shadow border-0 rounded-4 overflow-hidden">
+        
+        <div class="bg-light p-4 text-center position-relative">
+          <button class="btn btn-light position-absolute top-0 inset-s-0 m-2 shadow-sm rounded-circle p-2 d-flex align-items-center justify-content-center" 
+                  style="width: 40px; height: 40px; z-index: 10;"
+                  (click)="wishlistService.toggleWishlist(p)">
+            <span class="fs-5">{{ wishlistService.isInWishlist(p._id!) ? '❤️' : '🤍' }}</span>
+          </button>
+<img [src]="p.thumbnail" class="img-fluid w-100" alt="{{ p.title }}" style="height: 200px; object-fit: contain;" appZoom>          <span class="badge bg-secondary position-absolute top-0 inset-e-0 m-3 shadow-sm">
+            {{ p.category?.name || p.category }}
+          </span>
+        </div>
+        
+        <div class="card-body d-flex flex-column p-4">
+          <h5 class="card-title fw-bold text-dark mb-2">{{ p.title }}</h5>
+          
+          <p class="card-text text-secondary mb-4 small">
+            @if (expandedDesc.has(p._id!)) {
+              {{ p.description }}
+            } @else {
+              {{ p.description | truncateWords: 3 }}
+            }
+            <span class="text-primary fw-medium ms-1" style="cursor: pointer; text-decoration: none;" (click)="toggleDescription(p._id!)">
+              {{ expandedDesc.has(p._id!) ? 'See less' : 'Read more' }}
+            </span>
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="h4 mb-0 fw-bolder text-dark">{{ p.price | currency }}</span>
+            <span class="badge" [ngClass]="p.stock === 0 ? 'bg-danger' : 'bg-success'">
+              {{ p.stock === 0 ? 'Out of Stock' : 'Stock: ' + p.stock }}
+            </span>
+          </div>
+
+          <div class="mt-auto pt-3 border-top">
+            <div class="input-group input-group-sm mb-3 shadow-sm">
+              <button class="btn btn-outline-secondary px-3" (click)="decrease(p)" [disabled]="p.stock === 0">-</button>
+              <input type="number" class="form-control text-center fw-bold" 
+                     [(ngModel)]="quantities[p._id!]" min="1" [max]="p.stock" [disabled]="p.stock === 0">
+              <button class="btn btn-outline-secondary px-3" (click)="increase(p)" [disabled]="p.stock === 0">+</button>
+            </div>
+            
+            <div class="d-flex flex-column gap-2">
+              <button class="btn btn-primary w-100 fw-bold py-2 shadow-sm" (click)="buyProduct(p)" [disabled]="p.stock === 0 || getQuantity(p._id!) > p.stock">
+                🛒 Buy Now
+              </button>
+              
+              @if (isAdmin) {
+                <div class="row g-2 mt-2">
+                  <div class="col-6">
+                    <button class="btn btn-outline-warning w-100 fw-medium" (click)="editEvent.emit(p._id!)">Edit</button>
+                  </div>
+                  <div class="col-6">
+                    <button class="btn btn-outline-danger w-100 fw-medium" (click)="deleteEvent.emit(p._id!)">Delete</button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  } @empty {
+    <div class="col-12 py-5 text-center">
+      <div class="p-5 bg-light rounded-4 border border-dashed text-secondary">
+        <h4 class="fw-bold text-dark">No Products Found</h4>
+        <p class="mb-0">Try adjusting your filters or category selection.</p>
+      </div>
+    </div>
+  }
+</div>

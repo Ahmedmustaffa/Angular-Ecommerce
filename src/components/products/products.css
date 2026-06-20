@@ -1,0 +1,35 @@
+.card {
+  background-color: #ffffff;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+:host-context(.dark-theme) .card {
+  background-color: #1e293b !important; /* Slate 800 */
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+}
+
+:host-context(.dark-theme) .bg-light {
+  background-color: #0f172a !important; /* Slate 900 for image container */
+  border-bottom: 1px solid #334155 !important;
+}
+
+:host-context(.dark-theme) .text-dark {
+  color: #f8fafc !important;
+}
+
+:host-context(.dark-theme) .text-secondary {
+  color: #94a3b8 !important; /* Slate 400 */
+}
+
+:host {
+  display: block;
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 2px dashed #ccc;
+  transition: border-color 0.3s ease;
+}
+
+:host-context(.dark-theme) {
+  border-color: #334155 !important;
+}

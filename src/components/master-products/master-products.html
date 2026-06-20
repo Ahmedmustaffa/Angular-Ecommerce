@@ -1,0 +1,113 @@
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-gradient">Dynamic Product Store</h2>
+    <button appDarkMode class="btn btn-dark rounded-circle p-3 shadow-sm border-0 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+      🌓
+    </button>
+  </div>
+
+  <!-- Search and Filters Section -->
+  <div class="row g-3 mb-4 bg-light p-3 rounded shadow-sm text-dark align-items-end">
+    <!-- Search by Name -->
+    <div class="col-md-5">
+      <label class="form-label fw-bold small text-muted text-uppercase tracking-wider" for="searchName">Search by Name</label>
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0 text-secondary">🔍</span>
+        <input 
+          id="searchName"
+          type="text" 
+          class="form-control border-start-0" 
+          placeholder="Search products by title..." 
+          [ngModel]="searchText()" 
+          (ngModelChange)="onSearchChange($event)">
+        @if (searchText()) {
+          <button class="btn btn-outline-secondary border-start-0" type="button" (click)="clearSearch()">
+            &times;
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Filter by Category -->
+    <div class="col-md-3">
+      <label class="form-label fw-bold small text-muted text-uppercase tracking-wider" for="filterCategory">Category</label>
+      <select 
+        id="filterCategory"
+        class="form-select" 
+        [ngModel]="selectedCategory()" 
+        (ngModelChange)="onCategoryChange($event)">
+        @for (cat of categories(); track cat) {
+          <option [value]="cat">{{ cat | titlecase }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Sort Options -->
+    <div class="col-md-4">
+      <label class="form-label fw-bold small text-muted text-uppercase tracking-wider" for="sortProducts">Sort By</label>
+      <select 
+        id="sortProducts"
+        class="form-select" 
+        [ngModel]="selectedSort()" 
+        (ngModelChange)="onSortChange($event)">
+        <option value="default">Default Sort</option>
+        <option value="priceAsc">Price: Low to High</option>
+        <option value="priceDesc">Price: High to Low</option>
+        <option value="stock">Stock Quantity</option>
+      </select>
+    </div>
+  </div>
+
+  @if (products$ | async) {
+    @defer (on interaction(showBtn)) {
+      <!-- Products List -->
+      <app-products 
+        [products]="paginatedProducts()" 
+        (buyEvent)="handlePurchase($event)"
+        (editEvent)="handleEdit($event)"
+        (deleteEvent)="handleDelete($event)">
+      </app-products>
+
+      <!-- Pagination controls -->
+      @if (totalPages() > 1) {
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-5 pt-4 border-top gap-3">
+          <div class="text-secondary small">
+            Showing <strong>{{ showingFrom() }}</strong> to 
+            <strong>{{ showingTo() }}</strong> of 
+            <strong>{{ filteredProducts().length }}</strong> products
+          </div>
+          <nav aria-label="Product pagination">
+            <ul class="pagination mb-0 gap-1">
+              <li class="page-item" [class.disabled]="currentPage() === 1">
+                <button class="page-link rounded px-3 py-2 border-0 shadow-sm" (click)="goToPage(currentPage() - 1)">
+                  &larr; Prev
+                </button>
+              </li>
+              
+              @for (page of pageNumbers(); track page) {
+                <li class="page-item" [class.active]="currentPage() === page">
+                  <button class="page-link rounded px-3 py-2 border-0 shadow-sm" (click)="goToPage(page)">
+                    {{ page }}
+                  </button>
+                </li>
+              }
+
+              <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+                <button class="page-link rounded px-3 py-2 border-0 shadow-sm" (click)="goToPage(currentPage() + 1)">
+                  Next &rarr;
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      }
+    } @placeholder {
+      <div class="text-center py-5">
+        <button #showBtn class="btn btn-primary btn-lg shadow-sm px-5 py-3 rounded-pill fw-bold">
+          Click here to load products 🛒
+        </button>
+      </div>
+    }
+  }
+
+</div>

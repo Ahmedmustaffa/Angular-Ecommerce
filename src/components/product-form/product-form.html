@@ -1,0 +1,94 @@
+<div class="card shadow border-0 mt-4">
+  <div class="card-header bg-dark text-white rounded-top pt-3 pb-2">
+    <h3 class="mb-0">{{ isEditMode ? 'Modify Product Details' : 'Launch New Product' }}</h3>
+  </div>
+  <div class="card-body bg-light p-4">
+    <form #form="ngForm" (ngSubmit)="handleSubmit()">
+      
+      <div class="mb-4">
+        <label for="title" class="form-label text-secondary fw-bold">Product Title</label>
+        <input type="text" class="form-control" id="title" name="title" 
+               [(ngModel)]="newPrd.title" required minlength="3" #titleInp="ngModel"
+               [ngClass]="{'is-invalid': titleInp.invalid && titleInp.touched}">
+        @if (titleInp.invalid && titleInp.touched) {
+          <div class="invalid-feedback fw-medium">
+             A product name is required (minimum 3 characters).
+          </div>
+        }
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <label for="price" class="form-label text-secondary fw-bold">Price ($)</label>
+          <input type="number" class="form-control" id="price" name="price" 
+                 [(ngModel)]="newPrd.price" required min="1" #priceInp="ngModel"
+                 [ngClass]="{'is-invalid': priceInp.invalid && priceInp.touched}">
+          @if (priceInp.invalid && priceInp.touched) {
+            <div class="invalid-feedback fw-medium">
+               Price must be a positive number.
+            </div>
+          }
+        </div>
+
+        <div class="col-md-6 mb-4">
+          <label for="stock" class="form-label text-secondary fw-bold">Inventory Stock</label>
+          <input type="number" class="form-control" id="stock" name="stock" 
+                 [(ngModel)]="newPrd.stock" required min="0" #stockInp="ngModel"
+                 [ngClass]="{'is-invalid': stockInp.invalid && stockInp.touched}">
+          @if (stockInp.invalid && stockInp.touched) {
+            <div class="invalid-feedback fw-medium">
+               Stock levels cannot drop below 0.
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label for="description" class="form-label text-secondary fw-bold">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="3"
+                  [(ngModel)]="newPrd.description" required #descInp="ngModel"
+                  [ngClass]="{'is-invalid': descInp.invalid && descInp.touched}"></textarea>
+        @if (descInp.invalid && descInp.touched) {
+          <div class="invalid-feedback fw-medium">
+             A brief product description is required.
+          </div>
+        }
+      </div>
+
+      <div class="mb-4">
+        <label for="thumbnail" class="form-label text-secondary fw-bold">Thumbnail Image URL</label>
+        <input type="url" class="form-control" id="thumbnail" name="thumbnail" 
+               [(ngModel)]="newPrd.thumbnail" required #thumbInp="ngModel"
+               [ngClass]="{'is-invalid': thumbInp.invalid && thumbInp.touched}">
+        @if (thumbInp.invalid && thumbInp.touched) {
+          <div class="invalid-feedback fw-medium">
+             Don't forget to attach a valid image link.
+          </div>
+        }
+      </div>
+      
+<div class="mb-4">
+        <label for="category" class="form-label text-secondary fw-bold">Category</label>
+        <select class="form-select" id="category" name="category" 
+                [(ngModel)]="newPrd.category" required #catInp="ngModel"
+                [ngClass]="{'is-invalid': catInp.invalid && catInp.touched}">
+          <option value="" disabled selected>Select a Category...</option>
+          
+          @for (cat of categories(); track cat._id) {
+            <option [value]="cat._id">{{ cat.name }}</option>
+          }
+        </select>
+        
+        @if (catInp.invalid && catInp.touched) {
+           <div class="invalid-feedback fw-medium">
+              Please select a category.
+           </div>
+        }
+      </div>
+
+      <button type="submit" class="btn btn-dark w-100 py-2 fw-bold text-uppercase" [disabled]="form.invalid">
+        {{ isEditMode ? 'Update Product Details' : 'Create Product' }}
+      </button>
+    </form>
+  </div>
+</div>

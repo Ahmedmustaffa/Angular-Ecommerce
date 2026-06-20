@@ -1,0 +1,628 @@
+
+
+// ==========================================
+// File: ./controllers/authController.js
+// ==========================================
+
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// Register a new user
+exports.register = async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+        if (existingUser) return res.status(400).json({ message: 'User already exists' });
+
+        // Hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create user
+        const user = new User({ username, email, password: hashedPassword });
+        await user.save();
+
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Login user
+exports.login = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        // Find user by username
+        const user = await User.findOne({ username });
+        if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+
+        // Validate password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+
+        // Generate JWT
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
+
+        res.json({ token, user: { id: user._id, username: user.username, role: user.role } });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// ==========================================
+// File: ./controllers/cartController.js
+// ==========================================
+
+const Cart = require('../models/Cart');
+const Product = require('../models/Product');
+
+// Get the logged-in user's cart
+exports.getUserCart = async (req, res) => {
+    try {
+        let cart = await Cart.findOne({ user: req.user.id }).populate('items.product');
+        // If they don't have a cart yet, create an empty one
+        if (!cart) {
+            cart = await Cart.create({ user: req.user.id, items: [], totalPrice: 0 });
+        }
+        res.json(cart);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching cart', error: error.message });
+    }
+};
+
+// Add an item to the cart
+exports.addToCart = async (req, res) => {
+    try {
+        const { productId, quantity } = req.body;
+
+        // 1. Verify the product exists and has enough stock
+        const product = await Product.findById(productId);
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+        if (product.stock < quantity) return res.status(400).json({ message: 'Insufficient stock' });
+
+        // 2. Find or create the user's cart
+        let cart = await Cart.findOne({ user: req.user.id });
+        if (!cart) cart = new Cart({ user: req.user.id, items: [], totalPrice: 0 });
+
+        // 3. Check if product is already in the cart
+        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+        if (itemIndex > -1) {
+            // Update quantity if it exists
+            cart.items[itemIndex].quantity += quantity;
+        } else {
+            // Add new item if it doesn't
+            cart.items.push({ product: productId, quantity, price: product.price });
+        }
+
+        // 4. Recalculate total price
+        cart.totalPrice = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+        await cart.save();
+        res.json(cart);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating cart', error: error.message });
+    }
+};
+
+// Remove an item entirely from the cart
+exports.removeFromCart = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        let cart = await Cart.findOne({ user: req.user.id });
+        if (!cart) return res.status(404).json({ message: 'Cart not found' });
+
+        // Filter out the item to be removed
+        cart.items = cart.items.filter(item => item.product.toString() !== productId);
+
+        // Recalculate total price
+        cart.totalPrice = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+        await cart.save();
+        res.json(cart);
+    } catch (error) {
+        res.status(500).json({ message: 'Error removing item from cart', error: error.message });
+    }
+};
+
+// ==========================================
+// File: ./controllers/categoryController.js
+// ==========================================
+
+const Category = require('../models/Category');
+
+// Get all categories (Public)
+exports.getAllCategories = async (req, res) => {
+    try {
+        const categories = await Category.find();
+        res.json(categories);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching categories', error: error.message });
+    }
+};
+
+// Create a category (Admin Only)
+exports.createCategory = async (req, res) => {
+    try {
+        const category = new Category(req.body);
+        const savedCategory = await category.save();
+        res.status(201).json(savedCategory);
+    } catch (error) {
+        res.status(400).json({ message: 'Error creating category', error: error.message });
+    }
+};
+
+// Update a category (Admin Only)
+exports.updateCategory = async (req, res) => {
+    try {
+        const updatedCategory = await Category.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+        if (!updatedCategory) return res.status(404).json({ message: 'Category not found' });
+        res.json(updatedCategory);
+    } catch (error) {
+        res.status(400).json({ message: 'Error updating category', error: error.message });
+    }
+};
+
+// Delete a category (Admin Only)
+exports.deleteCategory = async (req, res) => {
+    try {
+        const deletedCategory = await Category.findByIdAndDelete(req.params.id);
+        if (!deletedCategory) return res.status(404).json({ message: 'Category not found' });
+        res.json({ message: 'Category deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting category', error: error.message });
+    }
+};
+
+// ==========================================
+// File: ./controllers/orderController.js
+// ==========================================
+
+const Order = require('../models/Order');
+const Cart = require('../models/Cart');
+
+exports.checkout = async (req, res) => {
+    try {
+        const { shippingAddress } = req.body;
+
+        const cart = await Cart.findOne({ user: req.user.id });
+        if (!cart || cart.items.length === 0) {
+            return res.status(400).json({ message: 'Your cart is empty' });
+        }
+
+        const order = new Order({
+            user: req.user.id,
+            items: cart.items,
+            totalAmount: cart.totalPrice,
+            shippingAddress: shippingAddress
+        });
+        await order.save();
+
+        cart.items = [];
+        cart.totalPrice = 0;
+        await cart.save();
+
+        res.status(201).json({ message: 'Order placed successfully!', order });
+    } catch (error) {
+        res.status(500).json({ message: 'Checkout failed', error: error.message });
+    }
+};
+
+exports.getUserOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching orders', error: error.message });
+    }
+};
+
+// ==========================================
+// File: ./controllers/productController.js
+// ==========================================
+
+const Product = require('../models/Product');
+
+exports.getAllProducts = async (req, res) => {
+    try {
+        // Populate replaces the category ID with the actual category document
+        const products = await Product.find().populate('category');
+        res.json(products);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching products', error: error.message });
+    }
+};
+
+exports.getProductById = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id).populate('category');
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching product', error: error.message });
+    }
+};
+
+exports.createProduct = async (req, res) => {
+    try {
+        const product = new Product(req.body);
+        const savedProduct = await product.save();
+        res.status(201).json(savedProduct);
+    } catch (error) {
+        res.status(400).json({ message: 'Error creating product', error: error.message });
+    }
+};
+
+exports.updateProduct = async (req, res) => {
+    try {
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+        if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
+        res.json(updatedProduct);
+    } catch (error) {
+        res.status(400).json({ message: 'Error updating product', error: error.message });
+    }
+};
+
+exports.deleteProduct = async (req, res) => {
+    try {
+        const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+        if (!deletedProduct) return res.status(404).json({ message: 'Product not found' });
+        res.json({ message: 'Product deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting product', error: error.message });
+    }
+};
+
+// ==========================================
+// File: ./controllers/wishlistController.js
+// ==========================================
+
+const User = require('../models/User');
+
+exports.getWishlist = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).populate('wishlist');
+        res.json(user.wishlist);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching wishlist', error: error.message });
+    }
+};
+
+exports.addToWishlist = async (req, res) => {
+    try {
+        const { productId } = req.body;
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $addToSet: { wishlist: productId } },
+            { new: true }
+        ).populate('wishlist');
+
+        res.json({ message: 'Added to wishlist', wishlist: user.wishlist });
+    } catch (error) {
+        res.status(500).json({ message: 'Error adding to wishlist', error: error.message });
+    }
+};
+
+exports.removeFromWishlist = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $pull: { wishlist: productId } },
+            { new: true }
+        ).populate('wishlist');
+
+        res.json({ message: 'Removed from wishlist', wishlist: user.wishlist });
+    } catch (error) {
+        res.status(500).json({ message: 'Error removing from wishlist', error: error.message });
+    }
+};
+
+// ==========================================
+// File: ./middleware/admin.js
+// ==========================================
+
+const adminGuard = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next(); // They are an admin, allow them to proceed
+    } else {
+        return res.status(403).json({ message: 'Access Denied. Admin privileges required.' });
+    }
+};
+
+module.exports = adminGuard;
+
+// ==========================================
+// File: ./middleware/auth.js
+// ==========================================
+
+const jwt = require('jsonwebtoken');
+
+const authGuard = (req, res, next) => {
+    const token = req.header('Authorization')?.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: 'Access Denied. No token provided.' });
+    }
+
+    try {
+        const verified = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = verified;
+        next();
+    } catch (error) {
+        res.status(400).json({ message: 'Invalid token.' });
+    }
+};
+
+module.exports = authGuard;
+
+// ==========================================
+// File: ./models/Cart.js
+// ==========================================
+
+const mongoose = require('mongoose');
+
+const cartItemSchema = new mongoose.Schema({
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    quantity: { type: Number, required: true, min: 1 },
+    price: { type: Number, required: true }
+});
+
+const cartSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    items: [cartItemSchema],
+    totalPrice: { type: Number, default: 0 }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Cart', cartSchema);
+
+// ==========================================
+// File: ./models/Category.js
+// ==========================================
+
+const mongoose = require('mongoose');
+
+const categorySchema = new mongoose.Schema({
+    name: { type: String, required: true, unique: true },
+    description: { type: String }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Category', categorySchema);
+
+// ==========================================
+// File: ./models/Order.js
+// ==========================================
+
+const mongoose = require('mongoose');
+
+const orderItemSchema = new mongoose.Schema({
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    quantity: { type: Number, required: true },
+    price: { type: Number, required: true }
+});
+
+const orderSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    items: [orderItemSchema],
+    totalAmount: { type: Number, required: true },
+    shippingAddress: { type: String, required: true },
+    status: { type: String, enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], default: 'Pending' }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Order', orderSchema);
+
+// ==========================================
+// File: ./models/Product.js
+// ==========================================
+
+const mongoose = require('mongoose');
+
+const productSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
+    stock: { type: Number, required: true, min: 0 },
+    thumbnail: { type: String, required: true },
+    images: [{ type: String }],
+    category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Product', productSchema);
+
+// ==========================================
+// File: ./models/User.js
+// ==========================================
+
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
+}, { timestamps: true });
+
+module.exports = mongoose.model('User', userSchema);
+
+// ==========================================
+// File: ./package.json
+// ==========================================
+
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.7.1"
+  }
+}
+
+
+// ==========================================
+// File: ./routes/authRoutes.js
+// ==========================================
+
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+
+module.exports = router;
+
+// ==========================================
+// File: ./routes/cartRoutes.js
+// ==========================================
+
+const express = require('express');
+const router = express.Router();
+const cartController = require('../controllers/cartController');
+const authGuard = require('../middleware/auth'); // Must be logged in!
+
+router.get('/', authGuard, cartController.getUserCart);
+router.post('/add', authGuard, cartController.addToCart);
+router.delete('/remove/:productId', authGuard, cartController.removeFromCart);
+
+module.exports = router;
+
+// ==========================================
+// File: ./routes/categoryRoutes.js
+// ==========================================
+
+const express = require('express');
+const router = express.Router();
+const categoryController = require('../controllers/categoryController');
+const authGuard = require('../middleware/auth');
+const adminGuard = require('../middleware/admin');
+
+router.get('/', categoryController.getAllCategories);
+router.post('/', authGuard, adminGuard, categoryController.createCategory);
+router.put('/:id', authGuard, adminGuard, categoryController.updateCategory);
+router.delete('/:id', authGuard, adminGuard, categoryController.deleteCategory);
+
+module.exports = router;
+
+// ==========================================
+// File: ./routes/orderRoutes.js
+// ==========================================
+
+const express = require('express');
+const router = express.Router();
+const orderController = require('../controllers/orderController');
+const authGuard = require('../middleware/auth');
+
+router.post('/checkout', authGuard, orderController.checkout);
+router.get('/my-orders', authGuard, orderController.getUserOrders);
+
+module.exports = router;
+
+// ==========================================
+// File: ./routes/productRoutes.js
+// ==========================================
+
+const express = require('express');
+const router = express.Router();
+const productController = require('../controllers/productController');
+
+const authGuard = require('../middleware/auth');
+const adminGuard = require('../middleware/admin');
+
+router.get('/', productController.getAllProducts);
+router.get('/:id', productController.getProductById);
+
+router.post('/', authGuard, adminGuard, productController.createProduct);
+router.put('/:id', authGuard, adminGuard, productController.updateProduct);
+router.delete('/:id', authGuard, adminGuard, productController.deleteProduct);
+
+module.exports = router;
+
+// ==========================================
+// File: ./routes/wishlistRoutes.js
+// ==========================================
+
+const express = require('express');
+const router = express.Router();
+const wishlistController = require('../controllers/wishlistController');
+const authGuard = require('../middleware/auth'); // User must be logged in
+
+router.get('/', authGuard, wishlistController.getWishlist);
+router.post('/add', authGuard, wishlistController.addToWishlist);
+router.delete('/remove/:productId', authGuard, wishlistController.removeFromWishlist);
+
+module.exports = router;
+
+// ==========================================
+// File: ./server.js
+// ==========================================
+
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+
+const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const wishlistRoutes = require('./routes/wishlistRoutes');
+
+const app = express();
+
+
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:4200',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
+
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+
+
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Successfully connected to MongoDB!'))
+    .catch((err) => console.error('MongoDB connection error:', err));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});

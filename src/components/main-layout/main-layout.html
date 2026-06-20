@@ -1,0 +1,148 @@
+<div class="d-flex flex-column min-vh-100">
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark bg-dark mb-4 py-3 shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a class="navbar-brand fw-bold fs-4" routerLink="/products">MyAwesomeApp</a>
+      <div class="d-flex align-items-center gap-3">
+        <a routerLink="/cart" class="btn btn-warning ms-2 d-flex align-items-center justify-content-center gap-2 fw-bold shadow-sm">
+          <span>🛒 {{ cartService.totalPrice() | currency }}</span>
+          @if (cartService.cartCount() > 0) {
+            <span class="badge bg-danger rounded-pill px-2 py-1">
+              {{ cartService.cartCount() }}
+            </span>
+          }
+        </a>            
+        <a routerLink="/wishlist" class="btn btn-outline-light ms-2 d-flex align-items-center justify-content-center gap-2">
+          <span>❤️ Wishlist</span>
+          @if (wishlistService.wishlistCount() > 0) {
+            <span class="badge bg-danger rounded-pill px-2 py-1">
+              {{ wishlistService.wishlistCount() }}
+            </span>
+          }
+        </a>
+        <a routerLink="/orders" class="btn btn-outline-light ms-2 d-flex align-items-center justify-content-center gap-2">
+          <span>📦 Orders</span>
+        </a>
+        @if (isAdmin) {
+          <a class="nav-link text-warning fw-bold text-decoration-none hover-white" routerLink="/admin">Categories</a>
+          <a class="nav-link text-warning fw-bold text-decoration-none hover-white" routerLink="/admin/orders">Orders</a>
+        }
+        <button class="btn btn-danger fw-bold ms-2 px-4" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow-1 container pb-5">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-light pt-5 pb-3 border-top border-secondary mt-auto">
+    <div class="container">
+      <div class="row g-4">
+        <!-- Brand Section -->
+        <div class="col-lg-4 col-md-6">
+          <h5 class="fw-bold mb-3 text-white">MyAwesomeApp</h5>
+          <p class="text-secondary small mb-3">
+            Your destination for premium quality products. We offer a curated collection of products with competitive pricing, swift delivery, and outstanding customer service.
+          </p>
+          <div class="d-flex gap-2">
+            <a href="#" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">f</a>
+            <a href="#" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">t</a>
+            <a href="#" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">i</a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="col-lg-2 col-md-6">
+          <h6 class="fw-bold text-uppercase mb-3 text-white">Explore</h6>
+          <ul class="list-unstyled d-flex flex-column gap-2 small">
+            <li><a routerLink="/products" class="text-secondary text-decoration-none footer-link">Products Catalog</a></li>
+            <li><a routerLink="/cart" class="text-secondary text-decoration-none footer-link">Shopping Cart</a></li>
+            <li><a routerLink="/wishlist" class="text-secondary text-decoration-none footer-link">My Wishlist</a></li>
+            @if (isAdmin) {
+              <li><a routerLink="/admin" class="text-secondary text-decoration-none footer-link">Admin Panel</a></li>
+            }
+          </ul>
+        </div>
+
+        <!-- Categories / Quick filters -->
+        <div class="col-lg-3 col-md-6">
+          <h6 class="fw-bold text-uppercase mb-3 text-white">Our Promise</h6>
+          <ul class="list-unstyled d-flex flex-column gap-2 small text-secondary">
+            <li>📦 Secure & Reliable Shipping</li>
+            <li>💳 Secure Online Checkout</li>
+            <li>🔄 30-Day Easy Returns Guarantee</li>
+            <li>💬 24/7 Priority Support Chat</li>
+          </ul>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="col-lg-3 col-md-6">
+          <h6 class="fw-bold text-uppercase mb-3 text-white">Contact Us</h6>
+          <ul class="list-unstyled d-flex flex-column gap-2 small text-secondary">
+            <li>📍 123 Tech Avenue, Cairo, Egypt</li>
+            <li>✉️ support&#64;myawesomeapp.com</li>
+            <li>📞 +20 123 456 7890</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Copyright row -->
+      <div class="border-top border-secondary mt-4 pt-3 text-center text-secondary small">
+        <p class="mb-0">&copy; 2026 MyAwesomeApp Inc. All rights reserved. Developed with ❤️ for ITI.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll to Top Button -->
+  @if (showScroll()) {
+    <button 
+      class="btn btn-primary rounded-circle position-fixed scroll-to-top-btn shadow-lg d-flex align-items-center justify-content-center" 
+      (click)="scrollToTop()" 
+      aria-label="Back to top">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+      </svg>
+    </button>
+  }
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+    @for (toast of toastService.toasts(); track toast.id) {
+      <div class="toast show align-items-center text-white border-0 mb-2 shadow-lg rounded-3" 
+           [class.bg-success]="toast.type === 'success'"
+           [class.bg-danger]="toast.type === 'danger'"
+           [class.bg-warning]="toast.type === 'warning'"
+           [class.bg-info]="toast.type === 'info'"
+           role="alert" aria-live="assertive" aria-atomic="true"
+           style="min-width: 250px;">
+        <div class="d-flex">
+          <div class="toast-body fw-bold">
+            {{ toast.message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" (click)="toastService.dismiss(toast.id)" aria-label="Close"></button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Custom Confirmation Modal -->
+  @if (confirmService.isOpen()) {
+    <div class="custom-modal-backdrop d-flex align-items-center justify-content-center">
+      <div class="card custom-modal-card p-4 shadow-lg border-0 rounded-4">
+        <h5 class="fw-bold mb-2 text-dark">{{ confirmService.title() }}</h5>
+        <p class="text-secondary small mb-4">{{ confirmService.message() }}</p>
+        <div class="d-flex justify-content-end gap-2">
+          <button class="btn btn-outline-secondary btn-sm px-3 fw-medium" (click)="confirmService.cancel()">
+            {{ confirmService.cancelText() }}
+          </button>
+          <button class="btn btn-danger btn-sm px-3 fw-bold shadow-sm" (click)="confirmService.confirm()">
+            {{ confirmService.confirmText() }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

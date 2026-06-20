@@ -1,0 +1,42 @@
+<div class="container py-5">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white">
+          <h4 class="mb-0">Manage Categories</h4>
+        </div>
+        <div class="card-body bg-light">
+          
+          <div class="input-group mb-4">
+            <input type="text" class="form-control" placeholder="New category name..." [(ngModel)]="newCategoryName">
+            <button class="btn btn-success fw-bold" (click)="addCategory()">+ Add Category</button>
+          </div>
+
+          <ul class="list-group">
+            @for (cat of categories(); track cat._id) {
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span class="fw-bold">{{ cat.name }}</span>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteCategory(cat._id)">Delete</button>
+              </li>
+            } @empty {
+              <li class="list-group-item text-center text-muted">No categories found.</li>
+            }
+          </ul>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Product Management</h4>
+        </div>
+        <div class="card-body bg-light text-center py-5">
+          <p class="text-secondary mb-4">You can add new products and assign them to existing categories.</p>
+          <a routerLink="/product/add" class="btn btn-lg btn-primary fw-bold w-100 shadow-sm">+ Add New Product</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

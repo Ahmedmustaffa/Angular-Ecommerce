@@ -1,0 +1,161 @@
+@import 'tailwindcss';
+
+/* --- LIGHT MODE REFINEMENTS --- */
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- DARK MODE REFINEMENTS --- */
+body.dark-theme {
+  background-color: #0f172a !important; /* Slate 900 */
+  color: #f8fafc !important; /* Slate 50 */
+}
+
+/* Dark mode text colors with high contrast */
+.dark-theme .text-dark,
+.dark-theme h1,
+.dark-theme h2,
+.dark-theme h3,
+.dark-theme h4,
+.dark-theme h5,
+.dark-theme h6 {
+  color: #f8fafc !important;
+}
+
+.dark-theme .text-secondary,
+.dark-theme .text-muted,
+.dark-theme p.text-secondary {
+  color: #94a3b8 !important; /* Slate 400 */
+}
+
+.dark-theme a:not(.btn) {
+  color: #38bdf8 !important; /* Sky 400 */
+}
+.dark-theme a:not(.btn):hover {
+  color: #7dd3fc !important; /* Sky 300 */
+}
+
+/* Dark mode background colors */
+.dark-theme .bg-light {
+  background-color: #1e293b !important; /* Slate 800 */
+  color: #f8fafc !important;
+}
+
+.dark-theme .bg-white {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Cards styling in dark mode */
+.dark-theme .card {
+  background-color: #1e293b !important; /* Slate 800 */
+  border-color: #334155 !important; /* Slate 700 */
+  color: #f8fafc !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3) !important;
+}
+
+.dark-theme .card-body {
+  background-color: transparent !important;
+  color: #f8fafc !important;
+}
+
+.dark-theme .card-title {
+  color: #f8fafc !important;
+}
+
+/* List group styling */
+.dark-theme .list-group {
+  border-color: #334155 !important;
+}
+
+.dark-theme .list-group-item {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* Forms and Inputs */
+.dark-theme .form-label {
+  color: #cbd5e1 !important; /* Slate 300 */
+}
+
+.dark-theme .form-control,
+.dark-theme .form-select {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important; /* Slate 600 */
+}
+
+.dark-theme .form-control:focus,
+.dark-theme .form-select:focus {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25) !important;
+}
+
+.dark-theme .form-control::placeholder {
+  color: #64748b !important; /* Slate 500 */
+}
+
+.dark-theme .form-select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Form checkboxes & radio buttons */
+.dark-theme .form-check-input {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+}
+
+.dark-theme .form-check-input:checked {
+  background-color: #0ea5e9 !important; /* Sky 500 */
+  border-color: #0ea5e9 !important;
+}
+
+.dark-theme .form-check-label {
+  color: #e2e8f0 !important;
+}
+
+/* Input group buttons (like quantity +/-) */
+.dark-theme .input-group .btn-outline-secondary {
+  color: #cbd5e1 !important;
+  border-color: #475569 !important;
+}
+
+.dark-theme .input-group .btn-outline-secondary:hover {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+.dark-theme .input-group .form-control {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Alerts */
+.dark-theme .alert-danger {
+  background-color: #7f1d1d !important;
+  border-color: #991b1b !important;
+  color: #fecaca !important;
+}
+
+/* HR elements */
+.dark-theme hr {
+  border-color: #334155 !important;
+  color: #334155 !important;
+  opacity: 0.5;
+}
+
+/* Custom button tweaks if needed */
+.dark-theme .btn-outline-warning {
+  color: #fbbf24 !important;
+  border-color: #fbbf24 !important;
+}
+.dark-theme .btn-outline-warning:hover {
+  background-color: #fbbf24 !important;
+  color: #0f172a !important;
+}
