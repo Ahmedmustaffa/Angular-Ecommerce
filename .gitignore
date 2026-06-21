@@ -19,6 +19,7 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
+.gitignore
 
 # Visual Studio Code
 .vscode/*
@@ -42,3 +43,21 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# User requested ignores
+/src/services
+/server
+/Server
+/src/interceptors
+src/guards
+src/admin-orders
+src/components/admin-orders
+admin dashboard
+src/components/admin-dashboard
+cart
+src/components/cart
+orders
+src/components/orders
+wishlist
+src/components/wishlist
+
