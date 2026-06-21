@@ -46,9 +46,6 @@ Thumbs.db
 
 # User requested ignores
 /src/services
-/server
-/Server
-/src/interceptors
 src/guards
 src/admin-orders
 src/components/admin-orders
